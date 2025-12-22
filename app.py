@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="taX26: Nigeria Fiscal Guide",
     page_icon="📉",
     layout="centered",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed" # Collapsed sidebar since toggle is gone
 )
 
 # --- CUSTOM CSS ---
@@ -23,20 +23,22 @@ st.markdown("""
         background-color: #008751; 
         color: white;
         font-weight: bold;
+        font-size: 16px;
     }
     .stButton>button:hover {
         background-color: #006b3f;
         color: white;
     }
     .big-font {
-        font-size: 24px !important;
-        font-weight: bold;
+        font-size: 28px !important; /* Increased size */
+        font-weight: 800; /* Extra Bold */
         color: #333;
     }
     .tax-header {
-        font-size: 16px;
-        color: #666;
-        margin-bottom: -10px;
+        font-size: 18px;
+        color: #555;
+        font-weight: bold;
+        margin-bottom: -5px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -55,32 +57,19 @@ lottie_money = load_lottieurl("https://lottie.host/5a70422c-7a6c-4860-9154-00100
 lottie_safe = load_lottieurl("https://lottie.host/98692797-176c-4869-8975-f2d22511475c/7J3f8l5J4z.json")  
 lottie_celebrate = load_lottieurl("https://lottie.host/4b85994e-2895-4b07-8840-79873998782d/P7j15j2K4z.json") 
 
-# --- TEXT DICTIONARY ---
-TEXT_ASSETS = {
-    "English": {
-        "title": "taX26 Compliance Suite",
-        "tab_personal": "Personal Income",
-        "tab_business": "Business / Corporate",
-        "tab_tools": "Tools & Invoicing",
-        "calc_btn": "Calculate Liability",
-        "wht_header": "Withholding Tax Invoice Generator",
-        "verdict_save": "Tax Savings Identified",
-        "verdict_pay": "Tax Liability Increased",
-        "exempt_msg": "Tax Exempt Status",
-        "share_msg": "Share Invoice via:"
-    },
-    "Pidgin": {
-        "title": "taX26: The Sapa-Proof Edition 🦁",
-        "tab_personal": "Me & My Money",
-        "tab_business": "My Hustle / Company",
-        "tab_tools": "Vawulence Tools",
-        "calc_btn": "Check My Damage 😤",
-        "wht_header": "Receipt of Vawulence Generator",
-        "verdict_save": "Odogwu! You escaped billing! 🚀",
-        "verdict_pay": "Breakfast Served. FIRS is watching. 😭",
-        "exempt_msg": "Government Pikin! You are free! 🍼",
-        "share_msg": "Show them shege via:"
-    }
+# --- TEXT ASSETS (UNIFIED) ---
+# Removed the toggle dictionary. Using a unified Nigerian-Professional tone.
+TXT = {
+    "title": "taX26 Compliance Suite 🇳🇬",
+    "tab_personal": "Personal Income",
+    "tab_business": "Business / Corporate",
+    "tab_tools": "WHT Invoice Tool",
+    "calc_btn": "Calculate My Tax Liability",
+    "wht_header": "Withholding Tax Invoice Generator",
+    "verdict_save": "Great News! Tax Savings Identified 🚀",
+    "verdict_pay": "Heads Up: Tax Liability Increased 📉",
+    "exempt_msg": "Tax Exempt Status (Minimum Wage)",
+    "share_msg": "Share Your Result via:"
 }
 
 # --- LOGIC CONSTANTS ---
@@ -169,30 +158,32 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- IMAGE GENERATOR (SOCIAL MEDIA CARD) ---
+# --- IMAGE GENERATOR (BOLD & FLASHY) ---
 def generate_social_card(old_tax, new_tax, pct_change, gross_income, is_incognito=False):
     width, height = 800, 500
     
-    # Theme Logic: Red/Orange for Increase, Green for Decrease
+    # Theme Logic
     is_increase = new_tax > old_tax
     if is_increase:
-        bg_color = "#8B0000" # Dark Red
-        accent_color = "#FF4500" # Orange Red
+        bg_color = "#8B0000" # Deep Bold Red
+        accent_color = "#FFD700" # Gold
         emoji = "😭"
         title_text = "BREAKFAST SERVED"
     else:
-        bg_color = "#006400" # Dark Green
-        accent_color = "#32CD32" # Lime Green
+        bg_color = "#004d33" # Nigerian Green
+        accent_color = "#FFFFFF" # White
         emoji = "🚀"
         title_text = "JUBILATION TIME"
 
     img = Image.new('RGB', (width, height), color=bg_color)
     d = ImageDraw.Draw(img)
     
+    # Font Logic - Tries to load bold fonts, falls back to default
     try: 
-        font_xl = ImageFont.truetype("arialbd.ttf", 60)
-        font_lg = ImageFont.truetype("arialbd.ttf", 40)
-        font_md = ImageFont.truetype("arial.ttf", 25)
+        # Increase default sizes significantly
+        font_xl = ImageFont.truetype("arialbd.ttf", 70) # Huge for numbers
+        font_lg = ImageFont.truetype("arialbd.ttf", 50)
+        font_md = ImageFont.truetype("arialbd.ttf", 30) # Bold medium
         font_sm = ImageFont.truetype("arial.ttf", 20)
     except: 
         font_xl = ImageFont.load_default()
@@ -203,45 +194,45 @@ def generate_social_card(old_tax, new_tax, pct_change, gross_income, is_incognit
     # --- DRAWING ---
     # Header
     d.text((width/2, 50), "taX26 REPORT CARD", font=font_md, fill="#FFD700", anchor="mm")
-    d.text((width/2, 100), f"{title_text} {emoji}", font=font_xl, fill="white", anchor="mm")
+    d.text((width/2, 100), f"{title_text} {emoji}", font=font_lg, fill="white", anchor="mm")
     
-    # Percentile (Gamification)
+    # Percentile
     percentile_msg = get_percentile_text(gross_income)
     d.text((width/2, 150), percentile_msg, font=font_md, fill="#ADD8E6", anchor="mm")
 
-    # Box for Data
-    box_x1, box_y1, box_x2, box_y2 = 50, 190, 750, 380
-    d.rectangle([box_x1, box_y1, box_x2, box_y2], fill=accent_color, outline="white", width=3)
+    # Data Box
+    box_x1, box_y1, box_x2, box_y2 = 40, 180, 760, 400
+    d.rectangle([box_x1, box_y1, box_x2, box_y2], outline="white", width=4)
 
     if is_incognito:
-        # INCOGNITO MODE: Only Percentages
+        # INCOGNITO MODE
         d.text((width/2, 240), "TAX IMPACT", font=font_lg, fill="white", anchor="mm")
         
         sign = "+" if is_increase else ""
         pct_txt = f"{sign}{pct_change:.1f}%"
-        d.text((width/2, 310), pct_txt, font=font_xl, fill="white", anchor="mm")
-        d.text((width/2, 350), "(Incognito Mode 🕵️)", font=font_sm, fill="#EEE", anchor="mm")
+        d.text((width/2, 310), pct_txt, font=font_xl, fill="#FFD700", anchor="mm") # Gold color for impact
+        d.text((width/2, 360), "(Incognito Mode 🕵️)", font=font_sm, fill="#EEE", anchor="mm")
 
     else:
-        # FULL MODE: Old vs New
+        # FULL MODE
         # Old Tax
-        d.text((200, 230), "OLD TAX (2011)", font=font_md, fill="#EEE", anchor="mm")
-        d.text((200, 270), f"₦{old_tax:,.0f}", font=font_lg, fill="white", anchor="mm")
+        d.text((200, 220), "OLD TAX (2011)", font=font_md, fill="#EEE", anchor="mm")
+        d.text((200, 280), f"₦{old_tax:,.0f}", font=font_lg, fill="white", anchor="mm")
         
-        # Divider Line
-        d.line([(400, 210), (400, 360)], fill="white", width=2)
+        # Vertical Divider
+        d.line([(400, 200), (400, 380)], fill="white", width=2)
         
         # New Tax
-        d.text((600, 230), "NEW TAX (2025)", font=font_md, fill="#EEE", anchor="mm")
-        d.text((600, 270), f"₦{new_tax:,.0f}", font=font_lg, fill="white", anchor="mm")
+        d.text((600, 220), "NEW TAX (2025)", font=font_md, fill="#EEE", anchor="mm")
+        d.text((600, 280), f"₦{new_tax:,.0f}", font=font_lg, fill="#FFD700", anchor="mm") # Gold for new tax
         
-        # Pct change at bottom of box
+        # Percentage at bottom
         sign = "+" if is_increase else ""
-        d.text((width/2, 340), f"Change: {sign}{pct_change:.1f}%", font=font_md, fill="#FFD700", anchor="mm")
+        d.text((width/2, 350), f"Change: {sign}{pct_change:.1f}%", font=font_md, fill="#ADD8E6", anchor="mm")
 
     # Footer
-    d.text((width/2, 430), "Powered by taX26", font=font_md, fill="#AAA", anchor="mm")
-    d.text((width/2, 460), "Check your own stats at taX26 App", font=font_sm, fill="#888", anchor="mm")
+    d.text((width/2, 440), "Powered by taX26", font=font_md, fill="#AAA", anchor="mm")
+    d.text((width/2, 470), "www.tax26.ng", font=font_sm, fill="#888", anchor="mm")
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -249,18 +240,11 @@ def generate_social_card(old_tax, new_tax, pct_change, gross_income, is_incognit
 
 # --- MAIN APP UI ---
 def main():
-    # Sidebar
-    with st.sidebar:
-        st.header("⚙️ Settings")
-        vibe_toggle = st.toggle("Switch to Pidgin English", value=False)
-        mode = "Pidgin" if vibe_toggle else "English"
-        txt = TEXT_ASSETS[mode]
-        st.caption("Toggle to switch between 'Standard English' and 'Pidgin English'.")
     
-    st.title(txt['title'])
+    st.title(TXT['title'])
     
     # Navigation Tabs
-    tab1, tab2, tab3 = st.tabs([txt['tab_personal'], txt['tab_business'], txt['tab_tools']])
+    tab1, tab2, tab3 = st.tabs([TXT['tab_personal'], TXT['tab_business'], TXT['tab_tools']])
     
     # --- TAB 1: PERSONAL ---
     with tab1:
@@ -271,20 +255,18 @@ def main():
             gross = col1.number_input("Annual Gross Income", min_value=0.0, step=100000.0, format="%.2f")
             rent = col2.number_input("Annual Rent Paid", min_value=0.0, step=50000.0, format="%.2f")
             
-            if st.button(txt['calc_btn'], key="btn_paye"):
+            if st.button(TXT['calc_btn'], key="btn_paye"):
                 tax_new = calculate_nta_2025_individual(gross, rent)
                 tax_old = calculate_pita_2011_individual(gross)
                 diff = tax_new - tax_old
                 
-                # Calculate Percentage Increase safely
-                if tax_old > 0:
-                    pct_change = ((tax_new - tax_old) / tax_old) * 100
-                else:
-                    pct_change = 100 if tax_new > 0 else 0
+                # Safe calc
+                if tax_old > 0: pct_change = ((tax_new - tax_old) / tax_old) * 100
+                else: pct_change = 100 if tax_new > 0 else 0
 
                 st.divider()
 
-                # --- NEW DISPLAY: NO TRUNCATION ---
+                # --- RESULT DISPLAY (BIGGER FONTS) ---
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown('<p class="tax-header">Old Tax (2011)</p>', unsafe_allow_html=True)
@@ -293,23 +275,23 @@ def main():
                     st.markdown('<p class="tax-header">New Tax (2025)</p>', unsafe_allow_html=True)
                     st.markdown(f'<p class="big-font">₦{tax_new:,.2f}</p>', unsafe_allow_html=True)
 
-                # Verdict Message
+                # Verdict
                 if tax_new == 0:
                     if lottie_celebrate: st_lottie(lottie_celebrate, height=150, key="anim_zero")
-                    st.success(txt['exempt_msg'])
+                    st.success(TXT['exempt_msg'])
                 elif diff < 0:
                     if lottie_celebrate: st_lottie(lottie_celebrate, height=150, key="anim_save")
-                    st.success(f"{txt['verdict_save']} (Saved ₦{abs(diff):,.2f})")
+                    st.success(f"{TXT['verdict_save']} (Saved ₦{abs(diff):,.2f})")
                 else:
                     if lottie_money: st_lottie(lottie_money, height=150, key="anim_pay")
-                    st.warning(f"{txt['verdict_pay']} (+₦{diff:,.2f})")
+                    st.warning(f"{TXT['verdict_pay']} (+₦{diff:,.2f})")
 
-                # --- GAMIFICATION / DOWNLOADS ---
-                st.write("### 📸 Share Your Tax Vibe")
+                # --- SHAREABLE CARDS ---
+                st.write("### 📸 Share Your Tax Status")
                 
                 col_d1, col_d2 = st.columns(2)
                 
-                # 1. Full Report Card
+                # 1. Full Report
                 full_img = generate_social_card(tax_old, tax_new, pct_change, gross, is_incognito=False)
                 col_d1.download_button(
                     label="📥 Download Full Report",
@@ -319,7 +301,7 @@ def main():
                     use_container_width=True
                 )
                 
-                # 2. Incognito Card
+                # 2. Incognito
                 incognito_img = generate_social_card(tax_old, tax_new, pct_change, gross, is_incognito=True)
                 col_d2.download_button(
                     label="🕵️ Download Incognito",
@@ -329,7 +311,7 @@ def main():
                     use_container_width=True
                 )
                 
-                st.image(full_img, caption="Preview of your Full Report Card", use_container_width=True)
+                st.image(full_img, caption="Preview of your Report Card", use_container_width=True)
 
 
         elif type_choice == "Freelancer / Remote":
@@ -339,13 +321,12 @@ def main():
             expenses = c2.number_input("Total Business Expenses", min_value=0.0, step=50000.0)
             rent = st.number_input("Rent (Personal)", min_value=0.0, step=50000.0)
             
-            if st.button(txt['calc_btn'], key="btn_free"):
+            if st.button(TXT['calc_btn'], key="btn_free"):
                 tax, profit = calculate_freelancer_tax(gross_inc, expenses, rent)
                 st.divider()
-                st.metric("Taxable Profit (After Expenses)", f"₦{profit:,.2f}")
-                st.metric("Tax Due", f"₦{tax:,.2f}")
-                if tax == 0:
-                    st.success(txt['exempt_msg'])
+                st.markdown(f"**Taxable Profit:** ₦{profit:,.2f}")
+                st.markdown(f"**Tax Due:** ₦{tax:,.2f}")
+                if tax == 0: st.success(TXT['exempt_msg'])
 
         elif type_choice == "Diaspora / Japa":
             days = st.slider("Days spent in Nigeria (Last 12 months)", 0, 365, 30)
@@ -353,15 +334,13 @@ def main():
             n_rent = st.number_input("Nigerian Rent Income", step=50000.0)
             n_div = st.number_input("Nigerian Dividends", step=10000.0)
             
-            if st.button(txt['calc_btn'], key="btn_diaspora"):
+            if st.button(TXT['calc_btn'], key="btn_diaspora"):
                 tax, status, is_safe = calculate_diaspora_tax(days, f_inc, n_rent, n_div)
                 st.divider()
                 st.subheader(status)
                 st.metric("Total Tax Liability", f"₦{tax:,.2f}")
-                if is_safe:
-                    st.success("Your Foreign Income is SAFE from FIRS.")
-                else:
-                    st.error("You stayed too long! Global Income is now taxable.")
+                if is_safe: st.success("Your Foreign Income is SAFE from FIRS.")
+                else: st.error("You stayed too long! Global Income is now taxable.")
 
     # --- TAB 2: BUSINESS ---
     with tab2:
@@ -371,7 +350,7 @@ def main():
         profit = st.number_input("Assessable Profit", min_value=0.0, step=500000.0)
         is_prof = st.checkbox("Professional Services (Law, Audit, etc)?")
         
-        if st.button(txt['calc_btn'], key="btn_corp"):
+        if st.button(TXT['calc_btn'], key="btn_corp"):
             cit, dev, status = calculate_corporate_tax(turnover, assets, profit, is_prof)
             total = cit + dev
             st.divider()
@@ -380,14 +359,12 @@ def main():
             c1.metric("CIT", f"₦{cit:,.2f}")
             c2.metric("Dev Levy", f"₦{dev:,.2f}")
             
-            if total == 0:
-                st.success("Exempt from CIT! Enjoy.")
-            else:
-                st.warning(f"Total Liability: ₦{total:,.2f}")
+            if total == 0: st.success("Exempt from CIT! Enjoy.")
+            else: st.warning(f"Total Liability: ₦{total:,.2f}")
 
     # --- TAB 3: TOOLS (INVOICING) ---
     with tab3:
-        st.subheader(txt['wht_header'])
+        st.subheader(TXT['wht_header'])
         col1, col2 = st.columns(2)
         client = col1.text_input("Client Name")
         amt = col2.number_input("Invoice Amount", step=50000.0)
@@ -415,7 +392,7 @@ def main():
                 border: none; 
                 padding: 10px 18px; 
                 border-radius: 6px; 
-                font-size: 14px; 
+                font-size: 16px; 
                 font-weight: bold; 
                 cursor: pointer; 
                 display: flex; align-items: center; gap: 8px;">
