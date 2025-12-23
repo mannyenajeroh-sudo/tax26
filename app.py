@@ -75,17 +75,23 @@ def load_lottieurl(url: str):
 lottie_money = load_lottieurl("https://lottie.host/5a70422c-7a6c-4860-9154-00100780164c/3d6H2k7i4z.json") 
 lottie_celebrate = load_lottieurl("https://lottie.host/4b85994e-2895-4b07-8840-79873998782d/P7j15j2K4z.json") 
 
-# NEW: Function to Download a Real Font (Fixes the Tiny Text Issue)
-@st.cache_data
+# --- FIXED FONT LOADER (NO CACHING TO PREVENT CRASH) ---
 def get_font(size):
+    """
+    Downloads a font on the fly. 
+    NO CACHING (@st.cache_data removed) to prevent serialization errors.
+    """
     try:
         # Downloads Roboto-Bold from Google Fonts repository
         font_url = "https://github.com/google/fonts/raw/main/apache/robotoslab/RobotoSlab-Bold.ttf"
-        r = requests.get(font_url)
-        return ImageFont.truetype(io.BytesIO(r.content), size)
+        r = requests.get(font_url, timeout=5)
+        if r.status_code == 200:
+            return ImageFont.truetype(io.BytesIO(r.content), size)
     except:
-        # Ultimate fallback if internet fails (though unlikely)
-        return ImageFont.load_default()
+        pass
+    
+    # Fallback if download fails
+    return ImageFont.load_default()
 
 # --- 4. LOGIC CONSTANTS (UPDATED NTA 2025) ---
 MIN_WAGE_THRESHOLD = 840000 
@@ -193,7 +199,7 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- 6. IMAGE GENERATORS (FIXED WITH DOWNLOADED FONTS) ---
+# --- 6. IMAGE GENERATORS (BOLD FONTS, NO CACHE) ---
 
 def generate_paye_card(old_tax, new_tax, pct_change, gross_income, is_incognito=False):
     width, height = 1200, 800
@@ -207,7 +213,7 @@ def generate_paye_card(old_tax, new_tax, pct_change, gross_income, is_incognito=
     img = Image.new('RGB', (width, height), color=bg_color)
     d = ImageDraw.Draw(img)
     
-    # Use the downloader helper to get REAL fonts
+    # Use the crash-proof font loader
     font_header = get_font(60)
     font_title = get_font(90)
     font_number = get_font(110)
@@ -247,7 +253,7 @@ def generate_wht_cert(client_name, amount, wht_deducted, net_payout):
     img = Image.new('RGB', (width, height), color="#FFFFFF")
     d = ImageDraw.Draw(img)
     
-    # Download real fonts
+    # Use the crash-proof font loader
     font_header = get_font(60)
     font_title = get_font(80)
     font_label = get_font(40)
