@@ -208,7 +208,6 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
         
     rank = get_percentile_text(gross_income)
 
-    # Note: Single-line strings or strict dedent to prevent raw code display issues
     html = f"""
     <div style="background: {bg_color}; padding: 25px; border-radius: 15px; color: white; font-family: sans-serif; border: 3px solid white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 10px;">
         <div style="text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 1px; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">taX26 REPORT CARD 🇳🇬</div>
@@ -239,7 +238,7 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
     """
     return html
 
-def render_wht_card_html(client_name, amount, wht_deducted, net_payout):
+def render_wht_card_html(vendor_name, client_name, amount, wht_deducted, net_payout):
     html = f"""
     <div style="background-color: white; border: 2px solid #003366; border-radius: 12px; overflow: hidden; font-family: sans-serif; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
         <div style="background-color: #003366; color: white; padding: 20px; text-align: center;">
@@ -247,11 +246,15 @@ def render_wht_card_html(client_name, amount, wht_deducted, net_payout):
             <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">WHT CREDIT NOTE</div>
         </div>
         <div style="padding: 25px; color: #333;">
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Vendor (Beneficiary)</div>
+                <div style="font-size: 18px; font-weight: bold; color: black;">{vendor_name}</div>
+            </div>
             <div style="margin-bottom: 20px;">
-                <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Client Name</div>
+                <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Client (Payer)</div>
                 <div style="font-size: 18px; font-weight: bold; color: black;">{client_name}</div>
             </div>
-            <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+            <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; border-top: 1px solid #eee; padding-top: 15px;">
                 <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Gross Amount</div>
                 <div style="font-size: 18px; font-weight: bold;">₦{amount:,.2f}</div>
             </div>
@@ -366,16 +369,22 @@ def main():
         
         if tool == "WHT Invoice Generator":
             st.markdown('<div class="advice-box"><b>WHT is Money!</b> Save this certificate as proof.</div>', unsafe_allow_html=True)
+            
+            # UPDATED COLUMNS FOR VENDOR NAME
             c1, c2 = st.columns(2)
-            cli = c1.text_input("Client Name")
-            amt = c2.number_input("Invoice Amount", 0.0, step=50000.0)
-            typ = st.selectbox("Type", ["Consultancy/Professional", "Construction", "Supply", "Director Fees", "Dividends"])
+            ven = c1.text_input("Vendor Name (You)")
+            cli = c2.text_input("Client Name (Payer)")
+            
+            c3, c4 = st.columns(2)
+            amt = c3.number_input("Invoice Amount", 0.0, step=50000.0)
+            typ = c4.selectbox("Type", ["Consultancy/Professional", "Construction", "Supply", "Director Fees", "Dividends"])
+            
             tin = st.checkbox("I have a TIN", True)
             
             if st.button("Generate WHT Certificate"):
                 w, n, r = calculate_wht(amt, typ, tin)
                 # RENDER HTML CARD
-                cert_html = render_wht_card_html(cli, amt, w, n)
+                cert_html = render_wht_card_html(ven, cli, amt, w, n)
                 st.markdown(cert_html, unsafe_allow_html=True)
                 st.markdown('<div class="screenshot-hint">👆 <b>Screenshot</b> this blue card and send it to your client! 📸</div>', unsafe_allow_html=True)
 
