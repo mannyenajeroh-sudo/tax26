@@ -173,7 +173,7 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- 6. HTML CARD RENDERERS (NO IMAGES, PURE CODE) ---
+# --- 6. HTML CARD RENDERERS (FIXED & STYLED) ---
 
 def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
     is_increase = new_tax > old_tax
@@ -193,6 +193,7 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
         
     rank = get_percentile_text(gross_income)
 
+    # UPDATED HTML WITH NEW STYLING
     html = f"""
     <div style="
         background: {bg_color}; 
@@ -204,11 +205,11 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
         box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         margin-bottom: 10px;
     ">
-        <div style="text-align: center; opacity: 0.8; font-weight: bold; font-size: 14px; letter-spacing: 1px;">taX26 REPORT CARD 🇳🇬</div>
+        <div style="text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 1px; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">taX26 REPORT CARD 🇳🇬</div>
         <div style="text-align: center; font-size: 32px; font-weight: 900; margin: 10px 0; color: {text_color}; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); line-height: 1.2;">
             {title_text} {emoji}
         </div>
-        <div style="text-align: center; font-size: 16px; margin-bottom: 20px; color: #ADD8E6; font-weight: bold;">
+        <div style="text-align: center; font-size: 12px; margin-bottom: 25px; color: #ADD8E6; font-weight: normal; opacity: 0.9;">
             {rank}
         </div>
         
