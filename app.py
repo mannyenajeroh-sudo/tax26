@@ -1,8 +1,6 @@
 import streamlit as st
 import requests
 from streamlit_lottie import st_lottie
-from PIL import Image, ImageDraw, ImageFont
-import io
 import urllib.parse 
 
 # --- 1. APP CONFIGURATION ---
@@ -34,20 +32,6 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
-    /* Typography */
-    .big-font {
-        font-size: 32px !important;
-        font-weight: 900;
-        color: #111;
-    }
-    .tax-header {
-        font-size: 18px;
-        color: #555;
-        font-weight: bold;
-        text-transform: uppercase;
-        margin-bottom: -5px;
-    }
-    
     /* Advice Box Styling */
     .advice-box {
         background-color: #f1f8e9;
@@ -58,11 +42,25 @@ st.markdown("""
         font-size: 15px;
         color: #2e7d32;
     }
+    
+    /* Screenshot Instruction */
+    .screenshot-hint {
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        margin-top: 10px;
+        font-style: italic;
+        background-color: #f8f9fa;
+        padding: 5px;
+        border-radius: 20px;
+        border: 1px dashed #ccc;
+        display: inline-block;
+        width: 100%;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ASSET LOADERS (Fonts & Lottie) ---
-
+# --- 3. ASSET LOADERS ---
 @st.cache_data
 def load_lottieurl(url: str):
     try:
@@ -72,28 +70,9 @@ def load_lottieurl(url: str):
     except: return None
 
 # Animation URLs
-lottie_money = load_lottieurl("https://lottie.host/5a70422c-7a6c-4860-9154-00100780164c/3d6H2k7i4z.json") 
 lottie_celebrate = load_lottieurl("https://lottie.host/4b85994e-2895-4b07-8840-79873998782d/P7j15j2K4z.json") 
 
-# --- FIXED FONT LOADER (NO CACHING TO PREVENT CRASH) ---
-def get_font(size):
-    """
-    Downloads a font on the fly. 
-    NO CACHING (@st.cache_data removed) to prevent serialization errors.
-    """
-    try:
-        # Downloads Roboto-Bold from Google Fonts repository
-        font_url = "https://github.com/google/fonts/raw/main/apache/robotoslab/RobotoSlab-Bold.ttf"
-        r = requests.get(font_url, timeout=5)
-        if r.status_code == 200:
-            return ImageFont.truetype(io.BytesIO(r.content), size)
-    except:
-        pass
-    
-    # Fallback if download fails
-    return ImageFont.load_default()
-
-# --- 4. LOGIC CONSTANTS (UPDATED NTA 2025) ---
+# --- 4. LOGIC CONSTANTS (NTA 2025) ---
 MIN_WAGE_THRESHOLD = 840000 
 RENT_RELIEF_CAP = 500000 
 RENT_RELIEF_RATE = 0.20 
@@ -117,12 +96,7 @@ def calculate_nta_2025_individual(gross_income, rent_paid, pension_vol=0, life_i
     
     tax = 0
     remaining = chargeable
-    
-    # 2025 Progressive Bands
-    bands = [
-        (800000, 0.00), (2200000, 0.15), (9000000, 0.18), 
-        (13000000, 0.21), (25000000, 0.23), (float('inf'), 0.25)
-    ]
+    bands = [(800000, 0.00), (2200000, 0.15), (9000000, 0.18), (13000000, 0.21), (25000000, 0.23), (float('inf'), 0.25)]
     
     for limit, rate in bands:
         if remaining <= 0: break
@@ -164,7 +138,7 @@ def calculate_freelancer_tax(gross_income, expenses_total, rent_paid):
     remaining -= taxable_0
     
     if remaining > 0:
-        tax += remaining * 0.20 # Average effective rate for freelancers
+        tax += remaining * 0.20 
         
     return tax, assessable_profit
 
@@ -199,126 +173,119 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- 6. IMAGE GENERATORS (HIGH RES FIX) ---
+# --- 6. HTML CARD RENDERERS (NO IMAGES, PURE CODE) ---
 
-def generate_paye_card(old_tax, new_tax, pct_change, gross_income, is_incognito=False):
-    # FIX 1: Double Resolution
-    width, height = 2400, 1600
-    
-    # FIX 2: Ratio-Based Scaling
-    SCALE = width / 1200.0  # Base scale factor relative to original design
-    
+def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
     is_increase = new_tax > old_tax
+    
     if is_increase:
-        bg_color, text_color, emoji, title_text = "#8B0000", "#FFD700", "😭", "BREAKFAST SERVED"
+        bg_color = "linear-gradient(135deg, #8B0000 0%, #b22222 100%)"
+        text_color = "#FFD700" # Gold
+        emoji = "😭"
+        title_text = "BREAKFAST SERVED"
+        verdict = f"Damage: +{pct_change:.1f}%"
     else:
-        bg_color, text_color, emoji, title_text = "#004d33", "#FFFFFF", "🚀", "JUBILATION TIME"
-
-    img = Image.new('RGB', (width, height), color=bg_color)
-    d = ImageDraw.Draw(img)
-    
-    # Fonts Scaled Proportionally
-    font_header = get_font(int(60 * SCALE))
-    font_title  = get_font(int(90 * SCALE))
-    font_number = get_font(int(130 * SCALE))
-    font_label  = get_font(int(50 * SCALE))
-    font_small  = get_font(int(32 * SCALE))
-
-    # All coordinates multiplied by SCALE
-    d.text((width/2, 80 * SCALE), "taX26 REPORT 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
-    d.text((width/2, 180 * SCALE), f"{title_text} {emoji}", font=font_title, fill=text_color, anchor="mm")
-    
-    if not is_incognito:
-        d.text((width/2, 270 * SCALE), get_percentile_text(gross_income), font=font_label, fill="#ADD8E6", anchor="mm")
-
-    # Box Scaled
-    d.rectangle(
-        [50 * SCALE, 320 * SCALE, 1150 * SCALE, 680 * SCALE], 
-        outline="white", 
-        width=int(8 * SCALE)
-    )
-
-    if is_incognito:
-        d.text((width/2, 380 * SCALE), "TAX IMPACT", font=font_header, fill="white", anchor="mm")
-        sign = "+" if is_increase else ""
-        d.text((width/2, 500 * SCALE), f"{sign}{pct_change:.1f}%", font=font_number, fill=text_color, anchor="mm")
-        d.text((width/2, 620 * SCALE), "(Incognito Mode 🕵️)", font=font_small, fill="#EEE", anchor="mm")
-    else:
-        d.text((300 * SCALE, 380 * SCALE), "OLD TAX (2011)", font=font_label, fill="#EEE", anchor="mm")
-        d.text((300 * SCALE, 480 * SCALE), f"₦{old_tax:,.0f}", font=font_number, fill="white", anchor="mm")
+        bg_color = "linear-gradient(135deg, #004d33 0%, #008751 100%)"
+        text_color = "#FFFFFF" # White
+        emoji = "🚀"
+        title_text = "JUBILATION TIME"
+        verdict = f"Savings: {pct_change:.1f}%"
         
-        # Line Scaled
-        d.line(
-            [(600 * SCALE, 320 * SCALE), (600 * SCALE, 680 * SCALE)], 
-            fill="white", 
-            width=int(5 * SCALE)
-        )
+    rank = get_percentile_text(gross_income)
+
+    html = f"""
+    <div style="
+        background: {bg_color}; 
+        padding: 25px; 
+        border-radius: 15px; 
+        color: white; 
+        font-family: sans-serif; 
+        border: 3px solid white;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        margin-bottom: 10px;
+    ">
+        <div style="text-align: center; opacity: 0.8; font-weight: bold; font-size: 14px; letter-spacing: 1px;">taX26 REPORT CARD 🇳🇬</div>
+        <div style="text-align: center; font-size: 32px; font-weight: 900; margin: 10px 0; color: {text_color}; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); line-height: 1.2;">
+            {title_text} {emoji}
+        </div>
+        <div style="text-align: center; font-size: 16px; margin-bottom: 20px; color: #ADD8E6; font-weight: bold;">
+            {rank}
+        </div>
         
-        d.text((900 * SCALE, 380 * SCALE), "NEW TAX (2025)", font=font_label, fill="#EEE", anchor="mm")
-        d.text((900 * SCALE, 480 * SCALE), f"₦{new_tax:,.0f}", font=font_number, fill=text_color, anchor="mm")
+        <div style="
+            background: rgba(255,255,255,0.15); 
+            border-radius: 12px; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        ">
+            <div style="text-align: center; flex: 1;">
+                <div style="font-size: 12px; opacity: 0.8;">OLD TAX (2011)</div>
+                <div style="font-size: 20px; font-weight: bold;">₦{old_tax:,.0f}</div>
+            </div>
+            <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.3); margin: 0 10px;"></div>
+            <div style="text-align: center; flex: 1;">
+                <div style="font-size: 12px; opacity: 0.8;">NEW TAX (2025)</div>
+                <div style="font-size: 20px; font-weight: 900; color: {text_color};">₦{new_tax:,.0f}</div>
+            </div>
+        </div>
         
-        sign = "+" if is_increase else ""
-        d.text((width/2, 620 * SCALE), f"Change: {sign}{pct_change:.1f}%", font=font_label, fill="#ADD8E6", anchor="mm")
+        <div style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 18px;">
+            {verdict}
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 10px; opacity: 0.6;">
+            POWERED BY taX26 | SCREENSHOT TO SAVE 📸
+        </div>
+    </div>
+    """
+    return html
 
-    d.text((width/2, 750 * SCALE), "Powered by taX26 | www.tax26.ng", font=font_small, fill="#AAA", anchor="mm")
-    
-    buf = io.BytesIO()
-    # FIX 3: Explicit DPI
-    img.save(buf, format="PNG", dpi=(300, 300))
-    return buf.getvalue()
+def render_wht_card_html(client_name, amount, wht_deducted, net_payout):
+    html = f"""
+    <div style="
+        background-color: white; 
+        border: 2px solid #003366; 
+        border-radius: 12px; 
+        overflow: hidden; 
+        font-family: sans-serif;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 10px;
+    ">
+        <div style="background-color: #003366; color: white; padding: 20px; text-align: center;">
+            <div style="font-size: 12px; opacity: 0.8;">taX26 OFFICIAL 🇳🇬</div>
+            <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">WHT CREDIT NOTE</div>
+        </div>
+        
+        <div style="padding: 25px; color: #333;">
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Client Name</div>
+                <div style="font-size: 18px; font-weight: bold; color: black;">{client_name}</div>
+            </div>
+            
+            <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Gross Amount</div>
+                <div style="font-size: 18px; font-weight: bold;">₦{amount:,.2f}</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 11px; color: #b22222; text-transform: uppercase; font-weight: bold;">WHT Deducted (Tax Credit)</div>
+                <div style="font-size: 22px; font-weight: 900; color: #b22222;">- ₦{wht_deducted:,.2f}</div>
+            </div>
+            
+            <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #c8e6c9;">
+                <div style="font-size: 12px; color: #2e7d32; text-transform: uppercase; font-weight: bold;">Net Payout Expected</div>
+                <div style="font-size: 26px; font-weight: 900; color: #2e7d32;">₦{net_payout:,.2f}</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; padding: 12px; background-color: #f8f9fa; font-size: 10px; color: #888; border-top: 1px solid #eee;">
+            VALID FOR RECORD KEEPING • SCREENSHOT TO SHARE 📸
+        </div>
+    </div>
+    """
+    return html
 
-def generate_wht_cert(client_name, amount, wht_deducted, net_payout):
-    # FIX 1: Double Resolution
-    width, height = 2000, 2400
-    
-    # FIX 2: Ratio Scaling
-    SCALE = width / 1000.0
-    
-    img = Image.new('RGB', (width, height), color="#FFFFFF")
-    d = ImageDraw.Draw(img)
-    
-    # Fonts Scaled
-    font_header = get_font(int(60 * SCALE))
-    font_title  = get_font(int(80 * SCALE))
-    font_label  = get_font(int(40 * SCALE))
-    font_val_huge = get_font(int(120 * SCALE))
-    font_val_med  = get_font(int(70 * SCALE))
-    font_sm     = get_font(int(30 * SCALE))
-
-    # Coordinates Scaled
-    d.rectangle([0, 0, width, 200 * SCALE], fill="#003366")
-    d.text((width/2, 70 * SCALE), "taX26 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
-    d.text((width/2, 150 * SCALE), "WHT CREDIT NOTE", font=font_title, fill="white", anchor="mm")
-
-    current_y = 280 * SCALE
-    d.text((width/2, current_y), "CLIENT:", font=font_label, fill="#555", anchor="mm")
-    current_y += 70 * SCALE
-    d.text((width/2, current_y), client_name, font=font_val_med, fill="#000", anchor="mm")
-    
-    current_y += 120 * SCALE
-    d.text((width/2, current_y), "GROSS AMOUNT:", font=font_label, fill="#555", anchor="mm")
-    current_y += 80 * SCALE
-    d.text((width/2, current_y), f"₦{amount:,.2f}", font=font_val_med, fill="#333", anchor="mm")
-    
-    current_y += 120 * SCALE
-    d.text((width/2, current_y), "WHT DEDUCTED (TAX CREDIT):", font=font_label, fill="#B22222", anchor="mm")
-    current_y += 100 * SCALE
-    d.text((width/2, current_y), f"- ₦{wht_deducted:,.2f}", font=font_val_huge, fill="#B22222", anchor="mm")
-    
-    current_y += 100 * SCALE
-    d.line([100 * SCALE, current_y, 900 * SCALE, current_y], fill="#333", width=int(5 * SCALE))
-    current_y += 100 * SCALE
-    
-    d.text((width/2, current_y), "NET PAYOUT:", font=font_title, fill="#003366", anchor="mm")
-    current_y += 120 * SCALE
-    d.text((width/2, current_y), f"₦{net_payout:,.2f}", font=font_val_huge, fill="#008000", anchor="mm")
-    
-    d.text((width/2, height - 80 * SCALE), "Generated by taX26 App | Valid for Tax Records", font=font_sm, fill="#777", anchor="mm")
-
-    buf = io.BytesIO()
-    # FIX 3: Explicit DPI
-    img.save(buf, format="PNG", dpi=(300, 300))
-    return buf.getvalue()
 
 # --- 7. MAIN APP UI ---
 def main():
@@ -350,26 +317,15 @@ def main():
                 pct_change = ((tax_new - tax_old) / tax_old * 100) if tax_old > 0 else (100 if tax_new > 0 else 0)
 
                 st.divider()
-                c1, c2 = st.columns(2)
-                c1.markdown(f'<div class="tax-header">OLD TAX (2011)</div><div class="big-font">₦{tax_old:,.2f}</div>', unsafe_allow_html=True)
-                c2.markdown(f'<div class="tax-header">NEW TAX (2025)</div><div class="big-font">₦{tax_new:,.2f}</div>', unsafe_allow_html=True)
                 
-                if tax_new == 0:
-                    st.success("🎉 You are TAX EXEMPT under the new Minimum Wage threshold!")
-                elif diff < 0:
-                    st.success(f"🚀 JUBILATION! You save ₦{abs(diff):,.2f} under the new law.")
-                    if lottie_celebrate: st_lottie(lottie_celebrate, height=150, key="anim_save")
-                else:
-                    st.error(f"📉 BREAKFAST SERVED. Your tax increased by ₦{diff:,.2f}.")
-                
-                st.write("### 📸 Flex Your Status")
-                d1, d2 = st.columns(2)
-                img_full = generate_paye_card(tax_old, tax_new, pct_change, gross, False)
-                d1.download_button("📥 Download Report Card", img_full, "taX26_Report.png", "image/png", use_container_width=True)
-                
-                img_hide = generate_paye_card(tax_old, tax_new, pct_change, gross, True)
-                d2.download_button("🕵️ Download Incognito", img_hide, "taX26_Incognito.png", "image/png", use_container_width=True)
+                # RENDER HTML CARD
+                card_html = render_paye_card_html(tax_old, tax_new, pct_change, gross)
+                st.markdown(card_html, unsafe_allow_html=True)
+                st.markdown('<div class="screenshot-hint">👆 <b>Long Press</b> or <b>Screenshot</b> this card to share on WhatsApp! 📸</div>', unsafe_allow_html=True)
 
+                if diff < 0:
+                    if lottie_celebrate: st_lottie(lottie_celebrate, height=150, key="anim_save")
+                
         elif profile == "Freelancer":
             st.info("💡 FIRS taxes **PROFIT**, not Revenue. Deduct your costs first!")
             with st.expander("🛡️ Freelance Expense Shield"):
@@ -431,12 +387,10 @@ def main():
             
             if st.button("Generate WHT Certificate"):
                 w, n, r = calculate_wht(amt, typ, tin)
-                st.metric("Net Payout", f"₦{n:,.2f}", delta=f"-₦{w:,.2f} WHT")
-                cert = generate_wht_cert(cli, amt, w, n)
-                st.download_button("📄 Download Certificate", cert, f"WHT_{cli}.png", "image/png", use_container_width=True)
-                
-                # FIX 4: Clamp Display
-                st.image(cert, caption="Preview", clamp=True)
+                # RENDER HTML CARD
+                cert_html = render_wht_card_html(cli, amt, w, n)
+                st.markdown(cert_html, unsafe_allow_html=True)
+                st.markdown('<div class="screenshot-hint">👆 <b>Screenshot</b> this blue card and send it to your client! 📸</div>', unsafe_allow_html=True)
 
         elif tool == "Japa Calculator (UK/Canada)":
             st.subheader("✈️ Purchasing Power Parity (PPP)")
