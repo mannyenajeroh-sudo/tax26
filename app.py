@@ -199,12 +199,16 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- 6. IMAGE GENERATORS (BOLD FONTS, NO CACHE) ---
+# --- 6. IMAGE GENERATORS (HIGH RES FIX) ---
 
 def generate_paye_card(old_tax, new_tax, pct_change, gross_income, is_incognito=False):
-    width, height = 1200, 800
-    is_increase = new_tax > old_tax
+    # FIX 1: Double Resolution
+    width, height = 2400, 1600
     
+    # FIX 2: Ratio-Based Scaling
+    SCALE = width / 1200.0  # Base scale factor relative to original design
+    
+    is_increase = new_tax > old_tax
     if is_increase:
         bg_color, text_color, emoji, title_text = "#8B0000", "#FFD700", "😭", "BREAKFAST SERVED"
     else:
@@ -213,86 +217,107 @@ def generate_paye_card(old_tax, new_tax, pct_change, gross_income, is_incognito=
     img = Image.new('RGB', (width, height), color=bg_color)
     d = ImageDraw.Draw(img)
     
-    # Use the crash-proof font loader
-    font_header = get_font(60)
-    font_title = get_font(90)
-    font_number = get_font(110)
-    font_label = get_font(45)
-    font_small = get_font(30)
+    # Fonts Scaled Proportionally
+    font_header = get_font(int(60 * SCALE))
+    font_title  = get_font(int(90 * SCALE))
+    font_number = get_font(int(130 * SCALE))
+    font_label  = get_font(int(50 * SCALE))
+    font_small  = get_font(int(32 * SCALE))
 
-    d.text((width/2, 80), "taX26 REPORT 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
-    d.text((width/2, 180), f"{title_text} {emoji}", font=font_title, fill=text_color, anchor="mm")
+    # All coordinates multiplied by SCALE
+    d.text((width/2, 80 * SCALE), "taX26 REPORT 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
+    d.text((width/2, 180 * SCALE), f"{title_text} {emoji}", font=font_title, fill=text_color, anchor="mm")
     
     if not is_incognito:
-        d.text((width/2, 270), get_percentile_text(gross_income), font=font_label, fill="#ADD8E6", anchor="mm")
+        d.text((width/2, 270 * SCALE), get_percentile_text(gross_income), font=font_label, fill="#ADD8E6", anchor="mm")
 
-    d.rectangle([50, 320, 1150, 680], outline="white", width=8)
+    # Box Scaled
+    d.rectangle(
+        [50 * SCALE, 320 * SCALE, 1150 * SCALE, 680 * SCALE], 
+        outline="white", 
+        width=int(8 * SCALE)
+    )
 
     if is_incognito:
-        d.text((width/2, 380), "TAX IMPACT", font=font_header, fill="white", anchor="mm")
+        d.text((width/2, 380 * SCALE), "TAX IMPACT", font=font_header, fill="white", anchor="mm")
         sign = "+" if is_increase else ""
-        d.text((width/2, 500), f"{sign}{pct_change:.1f}%", font=font_number, fill=text_color, anchor="mm")
-        d.text((width/2, 620), "(Incognito Mode 🕵️)", font=font_small, fill="#EEE", anchor="mm")
+        d.text((width/2, 500 * SCALE), f"{sign}{pct_change:.1f}%", font=font_number, fill=text_color, anchor="mm")
+        d.text((width/2, 620 * SCALE), "(Incognito Mode 🕵️)", font=font_small, fill="#EEE", anchor="mm")
     else:
-        d.text((300, 380), "OLD TAX (2011)", font=font_label, fill="#EEE", anchor="mm")
-        d.text((300, 480), f"₦{old_tax:,.0f}", font=font_number, fill="white", anchor="mm")
-        d.line([(600, 320), (600, 680)], fill="white", width=5)
-        d.text((900, 380), "NEW TAX (2025)", font=font_label, fill="#EEE", anchor="mm")
-        d.text((900, 480), f"₦{new_tax:,.0f}", font=font_number, fill=text_color, anchor="mm")
+        d.text((300 * SCALE, 380 * SCALE), "OLD TAX (2011)", font=font_label, fill="#EEE", anchor="mm")
+        d.text((300 * SCALE, 480 * SCALE), f"₦{old_tax:,.0f}", font=font_number, fill="white", anchor="mm")
+        
+        # Line Scaled
+        d.line(
+            [(600 * SCALE, 320 * SCALE), (600 * SCALE, 680 * SCALE)], 
+            fill="white", 
+            width=int(5 * SCALE)
+        )
+        
+        d.text((900 * SCALE, 380 * SCALE), "NEW TAX (2025)", font=font_label, fill="#EEE", anchor="mm")
+        d.text((900 * SCALE, 480 * SCALE), f"₦{new_tax:,.0f}", font=font_number, fill=text_color, anchor="mm")
+        
         sign = "+" if is_increase else ""
-        d.text((width/2, 620), f"Change: {sign}{pct_change:.1f}%", font=font_label, fill="#ADD8E6", anchor="mm")
+        d.text((width/2, 620 * SCALE), f"Change: {sign}{pct_change:.1f}%", font=font_label, fill="#ADD8E6", anchor="mm")
 
-    d.text((width/2, 750), "Powered by taX26 | www.tax26.ng", font=font_small, fill="#AAA", anchor="mm")
+    d.text((width/2, 750 * SCALE), "Powered by taX26 | www.tax26.ng", font=font_small, fill="#AAA", anchor="mm")
     
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    # FIX 3: Explicit DPI
+    img.save(buf, format="PNG", dpi=(300, 300))
     return buf.getvalue()
 
 def generate_wht_cert(client_name, amount, wht_deducted, net_payout):
-    width, height = 1000, 1200
+    # FIX 1: Double Resolution
+    width, height = 2000, 2400
+    
+    # FIX 2: Ratio Scaling
+    SCALE = width / 1000.0
+    
     img = Image.new('RGB', (width, height), color="#FFFFFF")
     d = ImageDraw.Draw(img)
     
-    # Use the crash-proof font loader
-    font_header = get_font(60)
-    font_title = get_font(80)
-    font_label = get_font(40)
-    font_val_huge = get_font(120)
-    font_val_med = get_font(70)
-    font_sm = get_font(30)
+    # Fonts Scaled
+    font_header = get_font(int(60 * SCALE))
+    font_title  = get_font(int(80 * SCALE))
+    font_label  = get_font(int(40 * SCALE))
+    font_val_huge = get_font(int(120 * SCALE))
+    font_val_med  = get_font(int(70 * SCALE))
+    font_sm     = get_font(int(30 * SCALE))
 
-    # Navy Header
-    d.rectangle([0, 0, width, 200], fill="#003366")
-    d.text((width/2, 70), "taX26 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
-    d.text((width/2, 150), "WHT CREDIT NOTE", font=font_title, fill="white", anchor="mm")
+    # Coordinates Scaled
+    d.rectangle([0, 0, width, 200 * SCALE], fill="#003366")
+    d.text((width/2, 70 * SCALE), "taX26 🇳🇬", font=font_header, fill="#DDD", anchor="mm")
+    d.text((width/2, 150 * SCALE), "WHT CREDIT NOTE", font=font_title, fill="white", anchor="mm")
 
-    current_y = 280
+    current_y = 280 * SCALE
     d.text((width/2, current_y), "CLIENT:", font=font_label, fill="#555", anchor="mm")
-    current_y += 70
+    current_y += 70 * SCALE
     d.text((width/2, current_y), client_name, font=font_val_med, fill="#000", anchor="mm")
     
-    current_y += 120
+    current_y += 120 * SCALE
     d.text((width/2, current_y), "GROSS AMOUNT:", font=font_label, fill="#555", anchor="mm")
-    current_y += 80
+    current_y += 80 * SCALE
     d.text((width/2, current_y), f"₦{amount:,.2f}", font=font_val_med, fill="#333", anchor="mm")
     
-    current_y += 120
+    current_y += 120 * SCALE
     d.text((width/2, current_y), "WHT DEDUCTED (TAX CREDIT):", font=font_label, fill="#B22222", anchor="mm")
-    current_y += 100
+    current_y += 100 * SCALE
     d.text((width/2, current_y), f"- ₦{wht_deducted:,.2f}", font=font_val_huge, fill="#B22222", anchor="mm")
     
-    current_y += 100
-    d.line([100, current_y, 900, current_y], fill="#333", width=5)
-    current_y += 100
+    current_y += 100 * SCALE
+    d.line([100 * SCALE, current_y, 900 * SCALE, current_y], fill="#333", width=int(5 * SCALE))
+    current_y += 100 * SCALE
     
     d.text((width/2, current_y), "NET PAYOUT:", font=font_title, fill="#003366", anchor="mm")
-    current_y += 120
+    current_y += 120 * SCALE
     d.text((width/2, current_y), f"₦{net_payout:,.2f}", font=font_val_huge, fill="#008000", anchor="mm")
     
-    d.text((width/2, height-80), "Generated by taX26 App | Valid for Tax Records", font=font_sm, fill="#777", anchor="mm")
+    d.text((width/2, height - 80 * SCALE), "Generated by taX26 App | Valid for Tax Records", font=font_sm, fill="#777", anchor="mm")
 
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    # FIX 3: Explicit DPI
+    img.save(buf, format="PNG", dpi=(300, 300))
     return buf.getvalue()
 
 # --- 7. MAIN APP UI ---
@@ -409,7 +434,9 @@ def main():
                 st.metric("Net Payout", f"₦{n:,.2f}", delta=f"-₦{w:,.2f} WHT")
                 cert = generate_wht_cert(cli, amt, w, n)
                 st.download_button("📄 Download Certificate", cert, f"WHT_{cli}.png", "image/png", use_container_width=True)
-                st.image(cert, caption="Preview", use_container_width=True)
+                
+                # FIX 4: Clamp Display
+                st.image(cert, caption="Preview", clamp=True)
 
         elif tool == "Japa Calculator (UK/Canada)":
             st.subheader("✈️ Purchasing Power Parity (PPP)")
