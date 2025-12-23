@@ -5,7 +5,7 @@ import urllib.parse
 
 # --- 1. APP CONFIGURATION ---
 st.set_page_config(
-    page_title="taX26 🇳🇬",
+    page_title="taX26",
     page_icon="🇳🇬",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -32,6 +32,21 @@ st.markdown("""
         transform: translateY(-2px);
     }
     
+    /* Branding Styling */
+    .main-title {
+        font-size: 40px !important;
+        font-weight: 900 !important;
+        color: #000000;
+        margin-bottom: -10px !important;
+    }
+    .sub-title {
+        font-size: 18px !important;
+        font-weight: 400 !important;
+        color: #666;
+        margin-top: 0px !important;
+        margin-bottom: 30px !important;
+    }
+
     /* Advice Box Styling */
     .advice-box {
         background-color: #f1f8e9;
@@ -51,10 +66,10 @@ st.markdown("""
         margin-top: 10px;
         font-style: italic;
         background-color: #f8f9fa;
-        padding: 5px;
-        border-radius: 20px;
+        padding: 8px;
+        border-radius: 12px;
         border: 1px dashed #ccc;
-        display: inline-block;
+        display: block;
         width: 100%;
     }
     </style>
@@ -173,7 +188,7 @@ def get_percentile_text(gross_income):
     if gross_income > 5000000: return "TOP 20% (SENIOR MAN 👊)"
     return "ASPIRING (THE MASSES ✊)"
 
-# --- 6. HTML CARD RENDERERS (FIXED & STYLED) ---
+# --- 6. HTML CARD RENDERERS (CLEANED) ---
 
 def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
     is_increase = new_tax > old_tax
@@ -193,18 +208,9 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
         
     rank = get_percentile_text(gross_income)
 
-    # UPDATED HTML WITH NEW STYLING
+    # Note: Single-line strings or strict dedent to prevent raw code display issues
     html = f"""
-    <div style="
-        background: {bg_color}; 
-        padding: 25px; 
-        border-radius: 15px; 
-        color: white; 
-        font-family: sans-serif; 
-        border: 3px solid white;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        margin-bottom: 10px;
-    ">
+    <div style="background: {bg_color}; padding: 25px; border-radius: 15px; color: white; font-family: sans-serif; border: 3px solid white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-bottom: 10px;">
         <div style="text-align: center; font-weight: 900; font-size: 24px; letter-spacing: 1px; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">taX26 REPORT CARD 🇳🇬</div>
         <div style="text-align: center; font-size: 32px; font-weight: 900; margin: 10px 0; color: {text_color}; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); line-height: 1.2;">
             {title_text} {emoji}
@@ -212,15 +218,7 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
         <div style="text-align: center; font-size: 12px; margin-bottom: 25px; color: #ADD8E6; font-weight: normal; opacity: 0.9;">
             {rank}
         </div>
-        
-        <div style="
-            background: rgba(255,255,255,0.15); 
-            border-radius: 12px; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: space-between;
-            align-items: center;
-        ">
+        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
             <div style="text-align: center; flex: 1;">
                 <div style="font-size: 12px; opacity: 0.8;">OLD TAX (2011)</div>
                 <div style="font-size: 20px; font-weight: bold;">₦{old_tax:,.0f}</div>
@@ -231,7 +229,6 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
                 <div style="font-size: 20px; font-weight: 900; color: {text_color};">₦{new_tax:,.0f}</div>
             </div>
         </div>
-        
         <div style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 18px;">
             {verdict}
         </div>
@@ -244,42 +241,29 @@ def render_paye_card_html(old_tax, new_tax, pct_change, gross_income):
 
 def render_wht_card_html(client_name, amount, wht_deducted, net_payout):
     html = f"""
-    <div style="
-        background-color: white; 
-        border: 2px solid #003366; 
-        border-radius: 12px; 
-        overflow: hidden; 
-        font-family: sans-serif;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
-    ">
+    <div style="background-color: white; border: 2px solid #003366; border-radius: 12px; overflow: hidden; font-family: sans-serif; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
         <div style="background-color: #003366; color: white; padding: 20px; text-align: center;">
             <div style="font-size: 12px; opacity: 0.8;">taX26 OFFICIAL 🇳🇬</div>
             <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">WHT CREDIT NOTE</div>
         </div>
-        
         <div style="padding: 25px; color: #333;">
             <div style="margin-bottom: 20px;">
                 <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Client Name</div>
                 <div style="font-size: 18px; font-weight: bold; color: black;">{client_name}</div>
             </div>
-            
             <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
                 <div style="font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold;">Gross Amount</div>
                 <div style="font-size: 18px; font-weight: bold;">₦{amount:,.2f}</div>
             </div>
-            
             <div style="margin-bottom: 20px;">
                 <div style="font-size: 11px; color: #b22222; text-transform: uppercase; font-weight: bold;">WHT Deducted (Tax Credit)</div>
                 <div style="font-size: 22px; font-weight: 900; color: #b22222;">- ₦{wht_deducted:,.2f}</div>
             </div>
-            
             <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #c8e6c9;">
                 <div style="font-size: 12px; color: #2e7d32; text-transform: uppercase; font-weight: bold;">Net Payout Expected</div>
                 <div style="font-size: 26px; font-weight: 900; color: #2e7d32;">₦{net_payout:,.2f}</div>
             </div>
         </div>
-        
         <div style="text-align: center; padding: 12px; background-color: #f8f9fa; font-size: 10px; color: #888; border-top: 1px solid #eee;">
             VALID FOR RECORD KEEPING • SCREENSHOT TO SHARE 📸
         </div>
@@ -290,7 +274,9 @@ def render_wht_card_html(client_name, amount, wht_deducted, net_payout):
 
 # --- 7. MAIN APP UI ---
 def main():
-    st.title("taX26 Compliance Suite 🇳🇬")
+    # BRANDING: Pronounced Title, Smaller Subtitle
+    st.markdown('<p class="main-title">taX26</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">Compliance Suite NG</p>', unsafe_allow_html=True)
     
     # NAVIGATION TABS
     tab1, tab2, tab3 = st.tabs(["👤 Personal & Salary", "🏢 Business & Directors", "🛠️ Tools & Guides"])
